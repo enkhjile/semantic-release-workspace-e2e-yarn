@@ -1,6 +1,0 @@
-node_modules/
-.pnp.*
-.yarn/
-packages/*/dist/
-.scratch/
-evidence/
