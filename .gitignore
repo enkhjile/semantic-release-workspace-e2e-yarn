@@ -1,9 +1,0 @@
-node_modules/
-.pnp.*
-.yarn/
-packages/*/dist/
-.scratch/
-evidence/
-
-live/*/dist/
-/.scratch-preview-*.npmrc
