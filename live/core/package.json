@@ -1,6 +1,6 @@
 {
   "name": "@enkhjile/srw-e2e-yarn-core",
-  "version": "1.0.0",
+  "version": "1.2.0-alpha7.1",
   "description": "Disposable yarn real-consumer acceptance core",
   "license": "MIT",
   "type": "module",

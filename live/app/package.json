@@ -1,6 +1,6 @@
 {
   "name": "@enkhjile/srw-e2e-yarn-app",
-  "version": "1.0.0",
+  "version": "1.1.1-alpha7.1",
   "description": "Disposable yarn real-consumer acceptance app",
   "license": "MIT",
   "type": "module",
