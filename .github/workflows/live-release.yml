@@ -1,6 +1,9 @@
 name: DIAGNOSTIC_LIVE_OIDC
 on:
   workflow_dispatch:
+defaults:
+  run:
+    shell: bash
 permissions:
   contents: write
   id-token: write
