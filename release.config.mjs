@@ -1,1 +1,1 @@
-export default {branches:['main',{name:'next',channel:'next'},{name:'alpha',prerelease:true},{name:'rc',prerelease:true}],tagFormat:'workspace-v${version}',plugins:[['semantic-release-workspace',{npm:{registry:process.env.ACCEPTANCE_REGISTRY,token:process.env.NPM_TOKEN,provenance:false}}]]};
+export default {branches:['main',{name:'alpha',prerelease:true}],tagFormat:'workspace-v${version}',plugins:['semantic-release-workspace']};
