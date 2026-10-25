@@ -1,0 +1,15 @@
+{
+  "name": "@srw-e2e/yarn-app",
+  "version": "1.0.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": "./dist/index.js",
+  "scripts": {
+    "prepack": "node ../../scripts/build.mjs app"
+  },
+  "dependencies": {
+    "@srw-e2e/yarn-core": "1.0.0"
+  }
+}

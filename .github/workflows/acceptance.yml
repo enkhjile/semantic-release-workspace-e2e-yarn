@@ -1,0 +1,51 @@
+name: acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      compatibility:
+        description: Run the independent compatibility matrix
+        type: boolean
+        default: false
+permissions:
+  contents: write
+  id-token: write
+concurrency:
+  group: workspace-release
+  cancel-in-progress: false
+jobs:
+  controlled:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+      - run: npm install --global npm@12.2.1
+      - run: |
+          npm install --global --force @yarnpkg/cli-dist@4.18.1
+          yarn install --immutable
+      - run: npm run acceptance
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yarn-acceptance-evidence
+          path: evidence/
+  node-modules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+      - run: npm install --global npm@12.2.1 @yarnpkg/cli-dist@4.18.1 --force
+      - run: yarn install --immutable
+      - run: ACCEPTANCE_LINKER=node-modules ACCEPTANCE_EVIDENCE=evidence/node-modules node scripts/acceptance.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yarn-node-modules-evidence
+          path: evidence/
