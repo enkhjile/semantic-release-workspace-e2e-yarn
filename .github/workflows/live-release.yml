@@ -36,7 +36,7 @@ jobs:
           command -v yarn >> evidence/native-tools.txt
           yarn --version >> evidence/native-tools.txt
           echo "ACCEPTANCE_NPM_PATH=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
-      - run: node --test scripts/registry-read.test.mjs scripts/network-count.test.mjs
+      - run: node --test scripts/registry-read.test.mjs scripts/network-count.test.mjs scripts/live-plan.test.mjs
       - run: node scripts/live-guard.mjs before
       - name: Read-only exact-version preview
         run: yarn exec semantic-release --dry-run 2>&1 | tee evidence/live-dry-run.log
