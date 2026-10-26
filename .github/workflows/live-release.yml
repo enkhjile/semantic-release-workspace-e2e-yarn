@@ -42,7 +42,7 @@ jobs:
           command -v yarn >> evidence/native-tools.txt
           yarn --version >> evidence/native-tools.txt
           echo "ACCEPTANCE_NPM_PATH=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
-      - run: node --test scripts/registry-read.test.mjs scripts/network-count.test.mjs scripts/live-plan.test.mjs
+      - run: node --test scripts/registry-read.test.mjs scripts/network-count.test.mjs scripts/live-plan.test.mjs scripts/live-workflow.test.mjs
       - run: node scripts/live-proof.mjs baseline
       - run: node scripts/live-guard.mjs before
       - name: Read-only exact one-package preview
@@ -64,23 +64,24 @@ jobs:
         with:
           fetch-depth: 0
           path: fresh
-      - name: Recover exact one-version batch from retained remote refs
+      - name: Wait for the verified published candidate
         if: ${{ inputs.publish }}
         working-directory: fresh
         run: |
           NODE_OPTIONS= SRW_HTTP_AUDIT= yarn install --immutable
+          mkdir -p evidence
+          node scripts/live-proof.mjs candidate 2>&1 | tee ../evidence/candidate-visibility.log
+        env:
+          NODE_OPTIONS: --import=${{ github.workspace }}/fresh/scripts/network-count.mjs
+          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/candidate-http.jsonl
+      - name: Recover the verified one-version batch from retained remote refs
+        if: ${{ inputs.publish }}
+        working-directory: fresh
+        run: |
           git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-initial-refs.txt
           [[ ! -s ../evidence/fresh-initial-refs.txt ]]
-          completed=false
-          for attempt in 1 2 3; do
-            if yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-retry-$attempt.log; then
-              completed=true
-            fi
-            git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-after-cli-$attempt-refs.txt
-            if [[ "$completed" == true ]]; then break; fi
-            if [[ "$attempt" != 3 ]]; then sleep 30; fi
-          done
-          [[ "$completed" == true ]]
+          yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-recovery.log
+          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-after-cli-refs.txt
         env:
           NODE_OPTIONS: --import=${{ github.workspace }}/fresh/scripts/network-count.mjs
           SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/recovery-http.jsonl
