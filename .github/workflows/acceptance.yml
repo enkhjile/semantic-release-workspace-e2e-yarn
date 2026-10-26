@@ -1,96 +1,39 @@
-name: acceptance
+name: alpha3-consumer-acceptance
 on:
   workflow_dispatch:
-    inputs:
-      compatibility:
-        description: Run independent Node floor and latest diagnostics with npm11
-        type: boolean
-        default: false
 permissions:
   contents: write
   id-token: write
 concurrency:
   group: workspace-release
   cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
 jobs:
-  documented-and-npm12-gates:
-    name: documented-and-npm12-gates
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v7.1.0
-        with:
-          node-version: 24.22.1
-      - run: npm install --global npm@12.2.1
-      - run: |
-          npm install --global --force @yarnpkg/cli-dist@4.18.1
-          yarn install --immutable
-      - run: node scripts/acceptance.mjs
-        env:
-          ACCEPTANCE_EVIDENCE: evidence/documented-and-npm12-gates
-          ACCEPTANCE_LINKER: pnp
-          ACCEPTANCE_SCENARIOS: normal-public-name-1,normal-public-name-2,coordination-dryrun-release-nochange
-      - uses: actions/upload-artifact@v7.0.2
-        if: always()
-        with:
-          name: yarn-documented-and-npm12-gates
-          path: evidence/
-  public-esm-npm11-diagnostic:
-    name: public-esm-npm11-diagnostic
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v7.1.0
-        with:
-          node-version: 24.22.1
-      - run: npm install --global npm@11.21.1
-      - run: |
-          npm install --global --force @yarnpkg/cli-dist@4.18.1
-          yarn install --immutable
-      - run: node scripts/acceptance.mjs
-        env:
-          ACCEPTANCE_EVIDENCE: evidence/public-esm-npm11-diagnostic
-          ACCEPTANCE_LINKER: pnp
-          ACCEPTANCE_DIAGNOSTIC: '1'
-      - uses: actions/upload-artifact@v7.0.2
-        if: always()
-        with:
-          name: yarn-public-esm-npm11-diagnostic
-          path: evidence/
-  node-modules-public-esm-npm11-diagnostic:
-    name: node-modules-public-esm-npm11-diagnostic
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v7.1.0
-        with:
-          node-version: 24.22.1
-      - run: npm install --global npm@11.21.1
-      - run: |
-          npm install --global --force @yarnpkg/cli-dist@4.18.1
-          yarn install --immutable
-      - run: node scripts/acceptance.mjs
-        env:
-          ACCEPTANCE_EVIDENCE: evidence/node-modules-public-esm-npm11-diagnostic
-          ACCEPTANCE_LINKER: node-modules
-          ACCEPTANCE_DIAGNOSTIC: '1'
-      - uses: actions/upload-artifact@v7.0.2
-        if: always()
-        with:
-          name: yarn-node-modules-public-esm-npm11-diagnostic
-          path: evidence/
-  node-compatibility:
-    if: inputs.compatibility
+  acceptance:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
+      max-parallel: 1
       matrix:
-        node: [24.11.0, 26.12.1]
+        include:
+          - node: "24.22.1"
+            npm: "12.2.1"
+            linker: "pnp"
+            suite: "full"
+          - node: "24.22.1"
+            npm: "12.2.1"
+            linker: "node-modules"
+            suite: "full"
+          - node: "24.11.0"
+            npm: "11.21.1"
+            linker: "pnp"
+            suite: "compatibility"
+          - node: "26.12.1"
+            npm: "12.2.1"
+            linker: "pnp"
+            suite: "compatibility"
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -98,18 +41,31 @@ jobs:
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ matrix.node }}
-      - run: npm install --global npm@11.21.1
+      - run: npm install --global npm@${{ matrix.npm }}
       - run: |
           npm install --global --force @yarnpkg/cli-dist@4.18.1
           yarn install --immutable
-      - run: node scripts/acceptance.mjs
+      - run: node --test scripts/consumer.test.mjs
+      - name: Record native executable paths and versions
+        run: |
+          mkdir -p evidence
+          node --version > evidence/native-tools.txt
+          command -v npm >> evidence/native-tools.txt
+          npm --version >> evidence/native-tools.txt
+          command -v yarn >> evidence/native-tools.txt
+          yarn --version >> evidence/native-tools.txt
+          echo "ACCEPTANCE_NPM_PATH=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
+      - name: Public package name and native packaging acceptance
+        run: |
+          if [[ "${{ matrix.suite }}" == compatibility ]]; then
+            export ACCEPTANCE_SCENARIOS=normal-public-name-1,normal-public-name-2,coordination-dryrun-release-nochange,fresh-clone-rejected-upload
+          fi
+          node scripts/acceptance.mjs
         env:
-          ACCEPTANCE_EVIDENCE: evidence/node-compatibility
-          ACCEPTANCE_LINKER: pnp
-          ACCEPTANCE_DIAGNOSTIC: '1'
-          ACCEPTANCE_SCENARIOS: coordination-dryrun-release-nochange
+          ACCEPTANCE_EVIDENCE: evidence/${{ matrix.node }}-npm${{ matrix.npm }}-${{ matrix.linker }}
+          ACCEPTANCE_LINKER: ${{ matrix.linker }}
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: yarn-node-compatibility-${{ matrix.node }}
+          name: yarn-alpha3-${{ matrix.node }}-npm${{ matrix.npm }}-${{ matrix.linker }}
           path: evidence/

@@ -3307,13 +3307,13 @@ __metadata:
   dependencies:
     "@yarnpkg/cli-dist": "npm:4.18.1"
     semantic-release: "npm:25.0.9"
-    semantic-release-workspace: "npm:1.0.0-alpha.2"
+    semantic-release-workspace: "npm:1.0.0-alpha.3"
   languageName: unknown
   linkType: soft
 
-"semantic-release-workspace@npm:1.0.0-alpha.2":
-  version: 1.0.0-alpha.2
-  resolution: "semantic-release-workspace@npm:1.0.0-alpha.2"
+"semantic-release-workspace@npm:1.0.0-alpha.3":
+  version: 1.0.0-alpha.3
+  resolution: "semantic-release-workspace@npm:1.0.0-alpha.3"
   dependencies:
     "@npmcli/agent": "npm:4.0.2"
     "@npmcli/config": "npm:10.14.0"
@@ -3331,7 +3331,7 @@ __metadata:
     yaml: "npm:2.9.1"
   peerDependencies:
     semantic-release: ^25.0.9
-  checksum: 10c0/410c532cdff4b8f81f2792e594183e36a534986534670ab125b0b0d7ea904beb41c53fd5eb5b03c16a1f3960ffcf4bd2ba2784101288e9dc65d5bc6b831a1a62
+  checksum: 10c0/88068a53ca84e1e0e02d7515da2b1537ab7e58768631d538d17fe16a755e2ce018e1b1683e20cfc2046de82d2d2f23545d09f4902265ddcec28a107bb00211e1
   languageName: node
   linkType: hard
 
