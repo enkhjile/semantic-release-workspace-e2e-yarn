@@ -68,14 +68,16 @@ jobs:
         if: ${{ inputs.publish }}
         working-directory: fresh
         run: |
-          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-initial-refs.txt
           NODE_OPTIONS= SRW_HTTP_AUDIT= yarn install --immutable
+          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-initial-refs.txt
+          [[ ! -s ../evidence/fresh-initial-refs.txt ]]
           completed=false
           for attempt in 1 2 3; do
             if yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-retry-$attempt.log; then
               completed=true
-              break
             fi
+            git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-after-cli-$attempt-refs.txt
+            if [[ "$completed" == true ]]; then break; fi
             if [[ "$attempt" != 3 ]]; then sleep 30; fi
           done
           [[ "$completed" == true ]]
@@ -101,10 +103,12 @@ jobs:
         if: ${{ inputs.publish }}
         working-directory: fresh-nochange
         run: |
-          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/nochange-initial-refs.txt
           NODE_OPTIONS= SRW_HTTP_AUDIT= yarn install --immutable
+          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/nochange-initial-refs.txt
+          [[ ! -s ../evidence/nochange-initial-refs.txt ]]
           unset ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_ID_TOKEN_REQUEST_TOKEN NPM_ID_TOKEN SIGSTORE_ID_TOKEN NPM_TOKEN NODE_AUTH_TOKEN
           yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-no-change.log
+          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/nochange-after-cli-refs.txt
         env:
           NODE_OPTIONS: --import=${{ github.workspace }}/fresh-nochange/scripts/network-count.mjs
           SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/rerun-http.jsonl
