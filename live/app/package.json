@@ -1,0 +1,21 @@
+{
+  "name": "@enkhjile/srw-e2e-yarn-app",
+  "version": "1.0.0",
+  "description": "Disposable yarn real-consumer acceptance app",
+  "license": "MIT",
+  "type": "module",
+  "exports": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prepack": "node build.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enkhjile/semantic-release-workspace-e2e-yarn.git"
+  },
+  "dependencies": {
+    "@enkhjile/srw-e2e-yarn-core": "1.1.0-alpha3.1"
+  }
+}
