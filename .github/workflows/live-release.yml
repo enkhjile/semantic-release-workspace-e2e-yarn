@@ -45,28 +45,57 @@ jobs:
           SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/dryrun-http.jsonl
       - run: node scripts/live-guard.mjs preview
       - name: Bounded two-version OIDC publication
+        continue-on-error: true
         run: yarn exec semantic-release 2>&1 | tee evidence/live-release.log
         env:
           NODE_OPTIONS: --import=${{ github.workspace }}/scripts/network-count.mjs
           SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/release-http.jsonl
-      - run: node scripts/live-proof.mjs released
-      - run: node scripts/live-guard.mjs released
-      - name: Ordinary fresh checkout without recovery refs
+      - name: Ordinary fresh checkout for exact-source recovery
         uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           path: fresh
-      - name: Fresh clone native install and no-change retry
+      - name: Recover only unfinished packages from retained remote refs
         working-directory: fresh
         run: |
           git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-initial-refs.txt
           NODE_OPTIONS= SRW_HTTP_AUDIT= yarn install --immutable
-          yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-no-change.log
+          completed=false
+          for attempt in 1 2 3; do
+            if yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-retry-$attempt.log; then
+              completed=true
+              break
+            fi
+            if [[ "$attempt" != 3 ]]; then sleep 30; fi
+          done
+          [[ "$completed" == true ]]
         env:
           NODE_OPTIONS: --import=${{ github.workspace }}/fresh/scripts/network-count.mjs
+          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/recovery-http.jsonl
+      - name: Verify published checksums, source-bound provenance, and native consumption
+        working-directory: fresh
+        run: |
+          mkdir -p evidence
+          node scripts/live-proof.mjs released
+          node scripts/live-guard.mjs released
+        env:
+          SRW_GUARD_DIRECTORY: ../evidence
+      - name: Second ordinary fresh checkout for no-change proof
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          path: fresh-nochange
+      - name: No-change retry cannot upload or request identity
+        working-directory: fresh-nochange
+        run: |
+          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/nochange-initial-refs.txt
+          NODE_OPTIONS= SRW_HTTP_AUDIT= yarn install --immutable
+          yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-no-change.log
+        env:
+          NODE_OPTIONS: --import=${{ github.workspace }}/fresh-nochange/scripts/network-count.mjs
           SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/rerun-http.jsonl
       - name: Fresh-clone zero-write guard
-        working-directory: fresh
+        working-directory: fresh-nochange
         run: node scripts/live-guard.mjs rerun
         env:
           SRW_GUARD_DIRECTORY: ../evidence
@@ -74,4 +103,6 @@ jobs:
         if: always()
         with:
           name: published-alpha3-live-oidc-yarn
-          path: evidence/
+          path: |
+            evidence/
+            fresh/evidence/
