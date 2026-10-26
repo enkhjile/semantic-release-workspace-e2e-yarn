@@ -66,6 +66,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@enkhjile/srw-e2e-yarn-app@workspace:live/app":
+  version: 0.0.0-use.local
+  resolution: "@enkhjile/srw-e2e-yarn-app@workspace:live/app"
+  dependencies:
+    "@enkhjile/srw-e2e-yarn-core": "npm:1.0.0"
+  languageName: unknown
+  linkType: soft
+
+"@enkhjile/srw-e2e-yarn-core@npm:1.0.0, @enkhjile/srw-e2e-yarn-core@workspace:live/core":
+  version: 0.0.0-use.local
+  resolution: "@enkhjile/srw-e2e-yarn-core@workspace:live/core"
+  languageName: unknown
+  linkType: soft
+
 "@gar/promise-retry@npm:^1.0.0, @gar/promise-retry@npm:^1.0.2":
   version: 1.0.3
   resolution: "@gar/promise-retry@npm:1.0.3"
@@ -659,42 +673,6 @@ __metadata:
   checksum: 10c0/482ee543629aa1933b332f811a1ae805a213681ecdd98c042b1c1b89387df63e7812248bb4df3910b02b3cc5589d3d73e4393f30e197c9dde18046ccd471fc6b
   languageName: node
   linkType: hard
-
-"@srw-e2e/yarn-app@workspace:packages/app":
-  version: 0.0.0-use.local
-  resolution: "@srw-e2e/yarn-app@workspace:packages/app"
-  dependencies:
-    "@srw-e2e/yarn-core": "npm:1.0.0"
-  languageName: unknown
-  linkType: soft
-
-"@srw-e2e/yarn-core@npm:1.0.0, @srw-e2e/yarn-core@workspace:packages/core":
-  version: 0.0.0-use.local
-  resolution: "@srw-e2e/yarn-core@workspace:packages/core"
-  languageName: unknown
-  linkType: soft
-
-"@srw-e2e/yarn-dev@workspace:packages/dev":
-  version: 0.0.0-use.local
-  resolution: "@srw-e2e/yarn-dev@workspace:packages/dev"
-  dependencies:
-    "@srw-e2e/yarn-core": "npm:1.0.0"
-  languageName: unknown
-  linkType: soft
-
-"@srw-e2e/yarn-peer@workspace:packages/peer":
-  version: 0.0.0-use.local
-  resolution: "@srw-e2e/yarn-peer@workspace:packages/peer"
-  peerDependencies:
-    "@srw-e2e/yarn-core": 1.0.0
-  languageName: unknown
-  linkType: soft
-
-"@srw-e2e/yarn-private@workspace:packages/private":
-  version: 0.0.0-use.local
-  resolution: "@srw-e2e/yarn-private@workspace:packages/private"
-  languageName: unknown
-  linkType: soft
 
 "@tufjs/canonical-json@npm:2.0.0":
   version: 2.0.0

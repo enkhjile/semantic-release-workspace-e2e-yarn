@@ -4,12 +4,13 @@
   "type": "module",
   "packageManager": "yarn@4.18.1",
   "workspaces": [
-    "packages/*"
+    "live/*"
   ],
   "scripts": {
     "acceptance": "node scripts/acceptance.mjs",
     "build": "node scripts/build.mjs",
-    "test": "node --test scripts/consumer.test.mjs"
+    "test": "node --test scripts/consumer.test.mjs",
+    "release:live": "semantic-release"
   },
   "devDependencies": {
     "@yarnpkg/cli-dist": "4.18.1",

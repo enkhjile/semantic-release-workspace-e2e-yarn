@@ -1,4 +1,4 @@
-name: DIAGNOSTIC_LIVE_OIDC
+name: PUBLISHED_ALPHA3_LIVE_OIDC
 on:
   workflow_dispatch:
 defaults:
@@ -11,8 +11,8 @@ concurrency:
   group: workspace-release
   cancel-in-progress: false
 jobs:
-  diagnostic-live-oidc:
-    if: github.ref == 'refs/heads/alpha'
+  bounded-live-oidc:
+    if: github.ref == 'refs/heads/alpha3'
     environment: public-npm
     runs-on: ubuntu-latest
     steps:
@@ -22,28 +22,56 @@ jobs:
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: 24.22.1
-      - run: npm install --global npm@11.21.1
+      - run: npm install --global npm@12.2.1
       - run: |
           npm install --global --force @yarnpkg/cli-dist@4.18.1
           yarn install --immutable
-      - name: Assert exactly the two approved public packages
-        run: node scripts/live-inventory.mjs
-      - name: Record pinned native npm binary
-        run: echo "DIAGNOSTIC_NPM_BIN=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
-      - run: mkdir -p evidence
-      - name: Record bootstrap baseline
-        run: node scripts/live-proof.mjs baseline
-      - name: Required OIDC and provenance preview
+      - name: Exact approved inventory and actual tools
+        run: |
+          mkdir -p evidence
+          node scripts/live-inventory.mjs | tee evidence/live-inventory.txt
+          node --version > evidence/native-tools.txt
+          command -v npm >> evidence/native-tools.txt
+          npm --version >> evidence/native-tools.txt
+          command -v yarn >> evidence/native-tools.txt
+          yarn --version >> evidence/native-tools.txt
+          echo "ACCEPTANCE_NPM_PATH=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
+      - run: node --test scripts/registry-read.test.mjs scripts/network-count.test.mjs
+      - run: node scripts/live-guard.mjs before
+      - name: Read-only exact-version preview
         run: yarn exec semantic-release --dry-run 2>&1 | tee evidence/live-dry-run.log
-      - name: DIAGNOSTIC_LIVE_OIDC public ESM resolution plus npm11 packaging
+        env:
+          NODE_OPTIONS: --import=${{ github.workspace }}/scripts/network-count.mjs
+          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/dryrun-http.jsonl
+      - run: node scripts/live-guard.mjs preview
+      - name: Bounded two-version OIDC publication
         run: yarn exec semantic-release 2>&1 | tee evidence/live-release.log
+        env:
+          NODE_OPTIONS: --import=${{ github.workspace }}/scripts/network-count.mjs
+          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/release-http.jsonl
       - run: node scripts/live-proof.mjs released
-      - name: No-change live rerun
-        run: yarn exec semantic-release 2>&1 | tee evidence/live-no-change.log
-      - run: node scripts/live-proof.mjs rerun
-      - run: git ls-remote --refs origin > evidence/live-remote-refs.txt
+      - run: node scripts/live-guard.mjs released
+      - name: Ordinary fresh checkout without recovery refs
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          path: fresh
+      - name: Fresh clone native install and no-change retry
+        working-directory: fresh
+        run: |
+          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-initial-refs.txt
+          NODE_OPTIONS= SRW_HTTP_AUDIT= yarn install --immutable
+          yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-no-change.log
+        env:
+          NODE_OPTIONS: --import=${{ github.workspace }}/fresh/scripts/network-count.mjs
+          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/rerun-http.jsonl
+      - name: Fresh-clone zero-write guard
+        working-directory: fresh
+        run: node scripts/live-guard.mjs rerun
+        env:
+          SRW_GUARD_DIRECTORY: ../evidence
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: diagnostic-live-oidc-yarn
+          name: published-alpha3-live-oidc-yarn
           path: evidence/
