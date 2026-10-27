@@ -14,6 +14,11 @@ export function assertIntent(plan, intent, head) {
   if (plan.head) assert.equal(plan.head, head);
 }
 
+export function assertAddedVersions(added, expected, inventory) {
+  const expectedAdded = expected.filter(p => !(p.version in inventory[p.name].versions));
+  assert.deepEqual([...added].sort((a,b) => a.name.localeCompare(b.name)), expectedAdded.sort((a,b) => a.name.localeCompare(b.name)), 'Unexpected public version delta');
+}
+
 async function main() {
   const intent = JSON.parse(readFileSync('alpha7-live-intent.json'));
   const root = JSON.parse(readFileSync('package.json'));
@@ -87,8 +92,7 @@ async function main() {
     for (const version of Object.keys(released.inventory[name].versions)) if (!(version in before.inventory[name].versions)) added.push({name, version});
     for (const [tag, version] of Object.entries(before.inventory[name].tags)) if (tag !== intent.channel) assert.equal(released.inventory[name].tags[tag], version);
   }
-  const expectedAdded = intent.expected.filter(p => !(p.version in before.inventory[p.name].versions));
-  assert.deepEqual(added.sort((a,b) => a.name.localeCompare(b.name)), expectedAdded.sort((a,b) => a.name.localeCompare(b.name)), 'Unexpected public version delta');
+  assertAddedVersions(added, intent.expected, before.inventory);
   if (!intent.expected.length) assert.deepEqual(released, before, 'Covered backmerge changed release effects');
   let journal;
   if (intent.expected.length) {
