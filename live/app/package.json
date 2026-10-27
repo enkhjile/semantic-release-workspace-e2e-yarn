@@ -16,6 +16,6 @@
     "url": "git+https://github.com/enkhjile/semantic-release-workspace-e2e-yarn.git"
   },
   "dependencies": {
-    "@enkhjile/srw-e2e-yarn-core": "1.1.0-alpha3.1"
+    "@enkhjile/srw-e2e-yarn-core": "1.0.0"
   }
 }

@@ -4,3 +4,6 @@ node_modules/
 packages/*/dist/
 .scratch/
 evidence/
+live/*/dist/
+
+.scratch-preview-*.npmrc

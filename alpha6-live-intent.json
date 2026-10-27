@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "mode": "preview-only",
+  "product": "semantic-release-workspace@1.0.0-alpha.6",
+  "manager": "yarn",
+  "branch": "stable-alpha6-live",
+  "phase": "stable-baseline",
+  "packages": [
+    {
+      "name": "@enkhjile/srw-e2e-yarn-core",
+      "nextVersion": "1.1.0"
+    },
+    {
+      "name": "@enkhjile/srw-e2e-yarn-app",
+      "nextVersion": "1.1.0"
+    }
+  ]
+}

@@ -1,15 +1,6 @@
-name: PUBLISHED_ALPHA4_APP_ONLY_OIDC
+name: Alpha.6 exact required-OIDC preview (no publication)
 on:
   workflow_dispatch:
-    inputs:
-      publish:
-        description: Publish the single approved app version after external review
-        type: boolean
-        required: true
-        default: false
-defaults:
-  run:
-    shell: bash
 permissions:
   contents: write
   id-token: write
@@ -17,10 +8,13 @@ concurrency:
   group: workspace-release
   cancel-in-progress: false
 jobs:
-  bounded-live-oidc:
-    if: github.ref == 'refs/heads/alpha4-live'
+  required-oidc-preview:
+    if: github.ref == 'refs/heads/stable-alpha6-live'
     environment: public-npm
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -32,97 +26,20 @@ jobs:
       - run: |
           npm install --global --force @yarnpkg/cli-dist@4.18.1
           yarn install --immutable
-      - name: Exact approved app, existing core and actual tools
+      - name: Validate exact preview guard and native executables
         run: |
-          mkdir -p evidence
-          node scripts/live-inventory.mjs | tee evidence/live-inventory.txt
-          node --version > evidence/native-tools.txt
-          command -v npm >> evidence/native-tools.txt
-          npm --version >> evidence/native-tools.txt
-          command -v yarn >> evidence/native-tools.txt
-          yarn --version >> evidence/native-tools.txt
+          mkdir -p evidence/alpha6-preview
+          node --test scripts/preview-alpha6.test.mjs
+          node --version > evidence/alpha6-preview/tools.txt
+          command -v npm >> evidence/alpha6-preview/tools.txt
+          npm --version >> evidence/alpha6-preview/tools.txt
           echo "ACCEPTANCE_NPM_PATH=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
-      - run: node --test scripts/registry-read.test.mjs scripts/network-count.test.mjs scripts/live-plan.test.mjs scripts/live-workflow.test.mjs scripts/published-provenance.test.mjs
-      - run: node scripts/live-proof.mjs baseline
-      - run: node scripts/live-guard.mjs before
-      - name: Read-only exact one-package preview
-        run: yarn exec semantic-release --dry-run 2>&1 | tee evidence/live-dry-run.log
+      - name: Required-OIDC dry-run and immutable public/source/ref assertions
+        run: node scripts/preview-alpha6.mjs
         env:
-          NODE_OPTIONS: --import=${{ github.workspace }}/scripts/network-count.mjs
-          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/dryrun-http.jsonl
-      - run: node scripts/live-guard.mjs preview
-      - name: Bounded one-version OIDC publication
-        if: ${{ inputs.publish }}
-        continue-on-error: true
-        run: yarn exec semantic-release 2>&1 | tee evidence/live-release.log
-        env:
-          NODE_OPTIONS: --import=${{ github.workspace }}/scripts/network-count.mjs
-          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/release-http.jsonl
-      - name: Ordinary fresh checkout for exact-source recovery
-        if: ${{ inputs.publish }}
-        uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-          path: fresh
-      - name: Wait for the verified published candidate
-        if: ${{ inputs.publish }}
-        working-directory: fresh
-        run: |
-          NODE_OPTIONS= SRW_HTTP_AUDIT= yarn install --immutable
-          mkdir -p evidence
-          node scripts/live-proof.mjs candidate 2>&1 | tee ../evidence/candidate-visibility.log
-        env:
-          NODE_OPTIONS: --import=${{ github.workspace }}/fresh/scripts/network-count.mjs
-          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/candidate-http.jsonl
-      - name: Recover the verified one-version batch from retained remote refs
-        if: ${{ inputs.publish }}
-        working-directory: fresh
-        run: |
-          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-initial-refs.txt
-          [[ ! -s ../evidence/fresh-initial-refs.txt ]]
-          yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-recovery.log
-          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/fresh-after-cli-refs.txt
-        env:
-          NODE_OPTIONS: --import=${{ github.workspace }}/fresh/scripts/network-count.mjs
-          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/recovery-http.jsonl
-      - name: Verify public digests, exact sources, crypto and native consumption
-        if: ${{ inputs.publish }}
-        working-directory: fresh
-        run: |
-          mkdir -p evidence
-          node scripts/live-proof.mjs released
-          node scripts/live-guard.mjs released
-        env:
-          SRW_GUARD_DIRECTORY: ../evidence
-      - name: Second ordinary fresh checkout for no-change proof
-        if: ${{ inputs.publish }}
-        uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-          path: fresh-nochange
-      - name: No-change cannot upload or request identity
-        if: ${{ inputs.publish }}
-        working-directory: fresh-nochange
-        run: |
-          NODE_OPTIONS= SRW_HTTP_AUDIT= yarn install --immutable
-          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/nochange-initial-refs.txt
-          [[ ! -s ../evidence/nochange-initial-refs.txt ]]
-          unset ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_ID_TOKEN_REQUEST_TOKEN NPM_ID_TOKEN SIGSTORE_ID_TOKEN NPM_TOKEN NODE_AUTH_TOKEN
-          yarn exec semantic-release 2>&1 | tee ../evidence/live-fresh-no-change.log
-          git for-each-ref --format='%(refname) %(objectname)' refs/notes refs/semantic-release-workspace > ../evidence/nochange-after-cli-refs.txt
-        env:
-          NODE_OPTIONS: --import=${{ github.workspace }}/fresh-nochange/scripts/network-count.mjs
-          SRW_HTTP_AUDIT: ${{ github.workspace }}/evidence/rerun-http.jsonl
-      - name: Fresh-clone zero-write guard
-        if: ${{ inputs.publish }}
-        working-directory: fresh-nochange
-        run: node scripts/live-guard.mjs rerun
-        env:
-          SRW_GUARD_DIRECTORY: ../evidence
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: alpha4-app-only-${{ inputs.publish && 'publish' || 'preview' }}-yarn
-          path: |
-            evidence/
-            fresh/evidence/
+          name: alpha6-preview-yarn
+          path: evidence/alpha6-preview/

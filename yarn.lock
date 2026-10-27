@@ -70,16 +70,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@enkhjile/srw-e2e-yarn-app@workspace:live/app"
   dependencies:
-    "@enkhjile/srw-e2e-yarn-core": "npm:1.1.0-alpha3.1"
+    "@enkhjile/srw-e2e-yarn-core": "npm:1.0.0"
   languageName: unknown
   linkType: soft
 
-"@enkhjile/srw-e2e-yarn-core@npm:1.1.0-alpha3.1":
-  version: 1.1.0-alpha3.1
-  resolution: "@enkhjile/srw-e2e-yarn-core@npm:1.1.0-alpha3.1"
-  checksum: 10c0/9beb34987f7ac0ec442420e36e01ede702dc633d30adba3a7c3ac84a93fbccfcc97c268a403d2cdcc30e5ba9d6d33dd6fe831a2e0c15947fe1cb4b0b5cdfaa3d
-  languageName: node
-  linkType: hard
+"@enkhjile/srw-e2e-yarn-core@npm:1.0.0, @enkhjile/srw-e2e-yarn-core@workspace:live/core":
+  version: 0.0.0-use.local
+  resolution: "@enkhjile/srw-e2e-yarn-core@workspace:live/core"
+  languageName: unknown
+  linkType: soft
 
 "@gar/promise-retry@npm:^1.0.0, @gar/promise-retry@npm:^1.0.2":
   version: 1.0.3
@@ -3286,13 +3285,13 @@ __metadata:
   dependencies:
     "@yarnpkg/cli-dist": "npm:4.18.1"
     semantic-release: "npm:25.0.9"
-    semantic-release-workspace: "npm:1.0.0-alpha.4"
+    semantic-release-workspace: "npm:1.0.0-alpha.6"
   languageName: unknown
   linkType: soft
 
-"semantic-release-workspace@npm:1.0.0-alpha.4":
-  version: 1.0.0-alpha.4
-  resolution: "semantic-release-workspace@npm:1.0.0-alpha.4"
+"semantic-release-workspace@npm:1.0.0-alpha.6":
+  version: 1.0.0-alpha.6
+  resolution: "semantic-release-workspace@npm:1.0.0-alpha.6"
   dependencies:
     "@npmcli/agent": "npm:4.0.2"
     "@npmcli/config": "npm:10.14.0"
@@ -3310,7 +3309,7 @@ __metadata:
     yaml: "npm:2.9.1"
   peerDependencies:
     semantic-release: ^25.0.9
-  checksum: 10c0/98e1a62b7cd0220cf2bba07f521dbdeb8d72590c41f3b1846b99a5487e8125f13c510fdfa2424a345bb9625f219c2e3927fe5a8377feb7fcd70c0d5261648591
+  checksum: 10c0/fe558aff521117b0b98119b290109c44285026ba78f36eedb97eda101c0c93a6bc9805b3985567fcb3d4d85ca82e57425818fa3eb3fb43aa808fbab43b965475
   languageName: node
   linkType: hard
 
