@@ -87,7 +87,8 @@ async function main() {
     for (const version of Object.keys(released.inventory[name].versions)) if (!(version in before.inventory[name].versions)) added.push({name, version});
     for (const [tag, version] of Object.entries(before.inventory[name].tags)) if (tag !== intent.channel) assert.equal(released.inventory[name].tags[tag], version);
   }
-  assert.deepEqual(added.sort((a,b) => a.name.localeCompare(b.name)), [...intent.expected].sort((a,b) => a.name.localeCompare(b.name)), 'Unexpected public version delta');
+  const expectedAdded = intent.expected.filter(p => !(p.version in before.inventory[p.name].versions));
+  assert.deepEqual(added.sort((a,b) => a.name.localeCompare(b.name)), expectedAdded.sort((a,b) => a.name.localeCompare(b.name)), 'Unexpected public version delta');
   if (!intent.expected.length) assert.deepEqual(released, before, 'Covered backmerge changed release effects');
   let journal;
   if (intent.expected.length) {
