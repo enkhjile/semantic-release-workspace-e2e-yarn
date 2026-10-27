@@ -79,6 +79,8 @@ async function main() {
   assert.equal(released.head, before.head);
   assert.equal(released.status, before.status);
   assert.deepEqual(released.source, before.source, 'Publication must restore tracked source');
+  const releasedRefs = new Map(released.refs.map(line => line.split('\t').reverse()));
+  for (const line of before.refs) { const [oid, ref] = line.split('\t'); if (!ref.startsWith('refs/notes/')) assert.equal(releasedRefs.get(ref), oid, `Existing ref changed: ${ref}`); }
   const added = [];
   for (const name of names) {
     for (const [version, integrity] of Object.entries(before.inventory[name].versions)) assert.equal(released.inventory[name].versions[version], integrity);
@@ -89,7 +91,7 @@ async function main() {
   if (!intent.expected.length) assert.deepEqual(released, before, 'Covered backmerge changed release effects');
   let journal;
   if (intent.expected.length) {
-    const ref = 'refs/notes/workspace-release-branches/' + createHash('sha256').update(intent.branch).digest('hex');
+    const ref = intent.branch === 'stable7-live' ? 'refs/notes/semantic-release-workspace' : 'refs/notes/workspace-release-branches/' + createHash('sha256').update(intent.branch).digest('hex');
     const entries = git('notes', '--ref=' + ref, 'list').trim().split('\n');
     journal = entries.map(line => JSON.parse(git('cat-file', 'blob', line.split(' ')[0]))).find(value => value.head === head);
     assert.equal(journal?.status, 'complete');
@@ -126,13 +128,22 @@ async function main() {
   if (intent.expected.length) {
     const app = intent.expected.find(p => p.name === names[1]);
     assert.ok(app, 'Each public wave must include the downstream app');
-    const consumer = mkdtempSync(join(tmpdir(), 'srw-live-alpha7-consumer-'));
-    try {
-      writeFileSync(join(consumer, 'package.json'), JSON.stringify({private: true, type: 'module'}));
-      execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--registry=https://registry.npmjs.org', `${app.name}@${app.version}`], {cwd: consumer, stdio: 'inherit'});
-      assert.equal(execFileSync('node', ['--input-type=module', '-e', `import {answer} from '${app.name}';console.log(answer())`], {cwd: consumer, encoding: 'utf8'}).trim(), '42');
-      writeFileSync(`${directory}/native-provenance-verification.txt`, execFileSync('npm', ['audit', 'signatures'], {cwd: consumer, encoding: 'utf8'}));
-    } finally { rmSync(consumer, {recursive: true, force: true}); }
+    for (const native of new Set([manager, 'npm'])) {
+      const consumer = mkdtempSync(join(tmpdir(), 'srw-live-alpha7-consumer-'));
+      try {
+        writeFileSync(join(consumer, 'package.json'), JSON.stringify({private: true, type: 'module', packageManager: native === manager ? root.packageManager : 'npm@12.2.1', dependencies: {[app.name]: app.version}}));
+        const approved = intent.expected.map(p => `  - ${JSON.stringify(p.name + '@' + p.version)}`).join('\n');
+        if (native === 'yarn') writeFileSync(join(consumer, '.yarnrc.yml'), `nodeLinker: pnp\nenableScripts: false\nnpmPreapprovedPackages:\n${approved}\n`);
+        if (native === 'pnpm') writeFileSync(join(consumer, 'pnpm-workspace.yaml'), `minimumReleaseAgeExclude:\n${approved}\n`);
+        const install = native === 'yarn' ? ['install', '--no-immutable'] : ['install', ...(native === 'pnpm' ? ['--no-frozen-lockfile'] : ['--no-audit', '--no-fund']), '--ignore-scripts', '--registry=https://registry.npmjs.org'];
+        execFileSync(native, install, {cwd: consumer, stdio: 'inherit'});
+        const execute = ['--input-type=module', '-e', `import {answer} from '${app.name}';console.log(answer())`];
+        const output = native === 'yarn' ? execFileSync('yarn', ['exec', 'node', ...execute], {cwd: consumer, encoding: 'utf8'}) : execFileSync('node', execute, {cwd: consumer, encoding: 'utf8'});
+        assert.equal(output.trim(), '42');
+        save(`native-${native}-consumer`, {manager: native, app, output: output.trim()});
+        if (native === 'npm') writeFileSync(`${directory}/native-provenance-verification.txt`, execFileSync('npm', ['audit', 'signatures'], {cwd: consumer, encoding: 'utf8'}));
+      } finally { rmSync(consumer, {recursive: true, force: true}); }
+    }
   }
   const beforeNoChange = await snapshot();
   save('before-no-change', beforeNoChange);
