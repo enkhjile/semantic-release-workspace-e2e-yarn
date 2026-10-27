@@ -77,6 +77,12 @@ async function main() {
   if (!plan.head) assert.match(preview, /There are no relevant changes|There are no changes to release/);
   assertIntent(plan, intent, head);
   save('plan', plan);
+  if (intent.phase === 'alpha8-sync') {
+    const appPlan = plan.packages.find(p => p.name === names[1]);
+    assert.deepEqual(appPlan.commits, []);
+    assert.equal(appPlan.type, 'patch');
+    assert.equal(appPlan.dependencyUpdates.find(d => d.field[0] === 'dependencies' && d.field[1] === names[0]).publishedRange, intent.expected.find(p => p.name === names[0]).version);
+  }
   assert.deepEqual(await snapshot(), before, 'Dry-run changed source, refs or public inventory');
   run('release', false, intent.expected.length === 0);
   const released = await snapshot(true);
@@ -137,7 +143,7 @@ async function main() {
     for (const native of new Set([manager, 'npm'])) {
       const consumer = mkdtempSync(join(tmpdir(), 'srw-live-alpha8-consumer-'));
       try {
-        writeFileSync(join(consumer, 'package.json'), JSON.stringify({private: true, type: 'module', packageManager: native === manager ? root.packageManager : 'npm@12.2.1', dependencies: {[target.name]: target.version}}));
+        writeFileSync(join(consumer, 'package.json'), JSON.stringify({private: true, type: 'module', packageManager: native === manager ? root.packageManager : 'npm@12.2.1', dependencies: Object.fromEntries(intent.expected.map(p => [p.name, p.version]))}));
         const approved = intent.expected.map(p => `  - ${JSON.stringify(p.name + '@' + p.version)}`).join('\n');
         if (native === 'yarn') writeFileSync(join(consumer, '.yarnrc.yml'), `nodeLinker: pnp\nenableScripts: false\nnpmPreapprovedPackages:\n${approved}\n`);
         if (native === 'pnpm') writeFileSync(join(consumer, 'pnpm-workspace.yaml'), `minimumReleaseAgeExclude:\n${approved}\n`);
@@ -146,7 +152,13 @@ async function main() {
         const execute = ['--input-type=module', '-e', `import {answer} from '${target.name}';console.log(answer())`];
         const output = native === 'yarn' ? execFileSync('yarn', ['exec', 'node', ...execute], {cwd: consumer, encoding: 'utf8'}) : execFileSync('node', execute, {cwd: consumer, encoding: 'utf8'});
         assert.equal(output.trim(), '42');
-        save(`native-${native}-consumer`, {manager: native, app, output: output.trim()});
+        let synchronizedOutput;
+        if (intent.phase === 'alpha8-sync') {
+          const executeCore = ['--input-type=module', '-e', `import {synchronizedAnswer} from '${names[0]}';console.log(synchronizedAnswer())`];
+          synchronizedOutput = (native === 'yarn' ? execFileSync('yarn', ['exec', 'node', ...executeCore], {cwd: consumer, encoding: 'utf8'}) : execFileSync('node', executeCore, {cwd: consumer, encoding: 'utf8'})).trim();
+          assert.equal(synchronizedOutput, '126');
+        }
+        save(`native-${native}-consumer`, {manager: native, target, output: output.trim(), synchronizedOutput});
         if (native === 'npm') writeFileSync(`${directory}/native-provenance-verification.txt`, execFileSync('npm', ['audit', 'signatures'], {cwd: consumer, encoding: 'utf8'}));
       } finally { rmSync(consumer, {recursive: true, force: true}); }
     }
