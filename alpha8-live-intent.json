@@ -1,0 +1,7 @@
+{
+  "phase": "alpha8-stable-setup",
+  "mode": "no-change",
+  "branch": "stable7-live",
+  "channel": "latest",
+  "expected": []
+}

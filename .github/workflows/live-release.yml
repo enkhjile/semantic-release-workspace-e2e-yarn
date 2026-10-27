@@ -23,6 +23,12 @@ jobs:
       - run: npm install --global npm@12.2.1 @yarnpkg/cli-dist@4.18.1 --force
       - run: echo "ACCEPTANCE_NPM_PATH=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
       - run: yarn install --immutable
-      - run: yarn exec semantic-release
+      - run: yarn exec node scripts/live-cycle-alpha8.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: alpha8-live-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/live-alpha8-cycle/
+          include-hidden-files: true
