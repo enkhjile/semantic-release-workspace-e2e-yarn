@@ -1,0 +1,12 @@
+{
+  "phase": "alpha8-default",
+  "mode": "publish",
+  "branch": "alpha7-live",
+  "channel": "alpha",
+  "expected": [
+    {
+      "name": "@enkhjile/srw-e2e-yarn-core",
+      "version": "1.2.0-alpha7.2"
+    }
+  ]
+}

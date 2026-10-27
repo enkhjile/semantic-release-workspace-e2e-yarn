@@ -15,6 +15,6 @@
   "devDependencies": {
     "@yarnpkg/cli-dist": "4.18.1",
     "semantic-release": "25.0.9",
-    "semantic-release-workspace": "1.0.0-alpha.7"
+    "semantic-release-workspace": "1.0.0-alpha.8"
   }
 }
