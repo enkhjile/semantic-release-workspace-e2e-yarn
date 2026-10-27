@@ -8,7 +8,7 @@ import {pathToFileURL} from 'node:url';
 const directory = 'evidence/live-alpha7-preview';
 mkdirSync(directory, {recursive: true});
 assert.equal(process.env.GITHUB_EVENT_NAME, 'push');
-assert.ok(['alpha', 'main'].includes(process.env.GITHUB_REF_NAME));
+assert.ok(['alpha7-live', 'stable7-live'].includes(process.env.GITHUB_REF_NAME));
 assert.equal(JSON.parse(readFileSync('package.json')).devDependencies['semantic-release-workspace'], '1.0.0-alpha.7');
 for (const name of ['NPM_TOKEN', 'NODE_AUTH_TOKEN']) assert.ok(!process.env[name], `${name} must be absent`);
 const git = (...args) => execFileSync('git', args, {encoding: 'utf8'});
