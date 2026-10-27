@@ -1,4 +1,4 @@
-name: alpha6-consumer-acceptance
+name: alpha6-settings-consumer-acceptance
 on:
   workflow_dispatch:
 permissions:
@@ -59,7 +59,7 @@ jobs:
       - name: Public package name and native packaging acceptance
         run: |
           if [[ "${{ matrix.suite }}" == compatibility ]]; then
-            export ACCEPTANCE_SCENARIOS=normal-public-name-1,normal-public-name-2,coordination-dryrun-release-nochange,fresh-clone-rejected-upload
+            export ACCEPTANCE_SCENARIOS=settings-omitted-defaults-native,settings-literal-conventional-preset-config,settings-inferred-manager-native,settings-true-diverged-main-alpha-cycle
           fi
           node scripts/acceptance.mjs
         env:
@@ -68,5 +68,5 @@ jobs:
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: yarn-alpha6-${{ matrix.node }}-npm${{ matrix.npm }}-${{ matrix.linker }}
+          name: yarn-alpha6-settings-${{ matrix.node }}-npm${{ matrix.npm }}-${{ matrix.linker }}
           path: evidence/
