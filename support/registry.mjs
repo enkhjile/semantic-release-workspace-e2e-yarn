@@ -1,6 +1,6 @@
 import {execFileSync, fork} from 'node:child_process';
 import {once} from 'node:events';
-import {mkdtempSync, readFileSync, writeFileSync} from 'node:fs';
+import {mkdtempSync, readFileSync, writeFileSync, rmSync} from 'node:fs';
 import {homedir, tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -39,10 +39,9 @@ export async function startRegistry({tls = false} = {}) {
     trusted: (value = {}) => writeFileSync(join(root, 'oidc.json'), JSON.stringify(value)),
     cargoTrusted: (value = {}) => writeFileSync(join(root, 'cargo-oidc.json'), JSON.stringify(value)),
     async close() {
-      if (server.exitCode !== null) return;
-      const exited = once(server, 'exit');
-      server.kill();
-      await exited;
+      try {
+        if (server.exitCode === null) {const exited = once(server, 'exit');server.kill();await exited;}
+      } finally {rmSync(root,{recursive:true,force:true});}
     },
   };
 }

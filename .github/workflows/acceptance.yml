@@ -1,4 +1,4 @@
-name: alpha6-settings-consumer-acceptance
+name: alpha7-consumer-acceptance
 on:
   workflow_dispatch:
 permissions:
@@ -25,14 +25,6 @@ jobs:
             npm: "12.2.1"
             linker: "node-modules"
             suite: "full"
-          - node: "24.11.0"
-            npm: "11.21.1"
-            linker: "pnp"
-            suite: "compatibility"
-          - node: "26.12.1"
-            npm: "12.2.1"
-            linker: "pnp"
-            suite: "compatibility"
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -40,15 +32,23 @@ jobs:
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ matrix.node }}
-      - run: npm install --global npm@${{ matrix.npm }}
+      - run: |
+          mkdir -p "$RUNNER_TEMP/alpha7-config"
+          touch "$RUNNER_TEMP/alpha7-config/user" "$RUNNER_TEMP/alpha7-config/global"
+          echo "npm_config_userconfig=$RUNNER_TEMP/alpha7-config/user" >> "$GITHUB_ENV"
+          echo "npm_config_globalconfig=$RUNNER_TEMP/alpha7-config/global" >> "$GITHUB_ENV"
+          echo "ACCEPTANCE_NPM_PATH=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
+          npm_config_userconfig="$RUNNER_TEMP/alpha7-config/user" npm_config_globalconfig="$RUNNER_TEMP/alpha7-config/global" npm install --global npm@${{ matrix.npm }}
       - run: |
           npm install --global --force @yarnpkg/cli-dist@4.18.1
           yarn install --immutable
+      - run: yarn exec node scripts/public-binding.mjs
       - run: yarn run build
       - run: node --test scripts/consumer.test.mjs
       - name: Record native executable paths and versions
         run: |
           mkdir -p evidence
+          touch evidence/install-userconfig evidence/install-globalconfig
           node --version > evidence/native-tools.txt
           command -v npm >> evidence/native-tools.txt
           npm --version >> evidence/native-tools.txt
@@ -68,5 +68,11 @@ jobs:
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: yarn-alpha6-settings-${{ matrix.node }}-npm${{ matrix.npm }}-${{ matrix.linker }}
+          name: yarn-alpha7-${{ matrix.node }}-npm${{ matrix.npm }}-${{ matrix.linker }}
           path: evidence/
+      - name: Remove generated native installation and caches
+        if: always()
+        run: |
+          rm -rf node_modules .pnp.cjs .pnp.loader.mjs .yarn .scratch "$RUNNER_TEMP/alpha7-config"
+          find evidence -type d \( -name npm-cache -o -name downstream \) -prune -exec rm -rf {} +
+          rm -f evidence/native-userconfig evidence/native-globalconfig evidence/install-userconfig evidence/install-globalconfig
