@@ -1,7 +1,16 @@
 {
-  "phase": "alpha8-stable-setup",
-  "mode": "no-change",
+  "phase": "alpha8-stable",
+  "mode": "publish",
   "branch": "stable7-live",
   "channel": "latest",
-  "expected": []
+  "expected": [
+    {
+      "name": "@enkhjile/srw-e2e-yarn-core",
+      "version": "1.2.0"
+    },
+    {
+      "name": "@enkhjile/srw-e2e-yarn-app",
+      "version": "1.1.1"
+    }
+  ]
 }
