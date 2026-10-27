@@ -2,8 +2,7 @@ name: alpha6-settings-consumer-acceptance
 on:
   workflow_dispatch:
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 concurrency:
   group: workspace-release
   cancel-in-progress: false
