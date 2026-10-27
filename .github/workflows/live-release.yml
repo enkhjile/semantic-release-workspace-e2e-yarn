@@ -1,4 +1,4 @@
-name: Alpha.7 push-triggered OIDC preview
+name: Alpha.7 public push cycle
 on:
   push:
     branches: [alpha7-live, stable7-live]
@@ -12,7 +12,7 @@ defaults:
   run:
     shell: bash
 jobs:
-  preview:
+  release:
     environment: public-npm
     runs-on: ubuntu-latest
     steps:
@@ -31,22 +31,24 @@ jobs:
           touch "$RUNNER_TEMP/live-alpha7-config/user" "$RUNNER_TEMP/live-alpha7-config/global"
           echo "npm_config_userconfig=$RUNNER_TEMP/live-alpha7-config/user" >> "$GITHUB_ENV"
           echo "npm_config_globalconfig=$RUNNER_TEMP/live-alpha7-config/global" >> "$GITHUB_ENV"
+          echo "YARN_GLOBAL_FOLDER=$RUNNER_TEMP/live-alpha7-yarn" >> "$GITHUB_ENV"
           echo "ACCEPTANCE_NPM_PATH=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
       - run: yarn install --immutable
       - run: node scripts/live-inventory.mjs
       - run: yarn exec node scripts/public-binding.mjs
       - run: node --test scripts/registry-read.test.mjs
-      - name: Real push-source dry-run with publication disabled by CLI
-        run: node scripts/live-alpha7-preview.mjs
+      - run: node --test scripts/live-cycle-alpha7.test.mjs
+      - name: Guarded public OIDC release and no-change verification
+        run: node scripts/live-cycle-alpha7.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: live-alpha7-yarn-preview-${{ github.sha }}
+          name: live-alpha7-yarn-cycle-${{ github.sha }}
           path: |
-            evidence/live-alpha7-preview/
+            evidence/live-alpha7-cycle/
             evidence/public-alpha7/
       - name: Remove generated installation and configuration
         if: always()
-        run: rm -rf .yarn .pnp.cjs .pnp.loader.mjs "$RUNNER_TEMP/live-alpha7-config"
+        run: rm -rf .yarn .pnp.cjs .pnp.loader.mjs "$RUNNER_TEMP/live-alpha7-config" "$RUNNER_TEMP/live-alpha7-yarn"

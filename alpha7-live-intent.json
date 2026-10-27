@@ -1,0 +1,16 @@
+{
+  "mode": "publish",
+  "phase": "first-alpha",
+  "branch": "alpha7-live",
+  "channel": "alpha",
+  "expected": [
+    {
+      "name": "@enkhjile/srw-e2e-yarn-core",
+      "version": "1.1.0-alpha7.1"
+    },
+    {
+      "name": "@enkhjile/srw-e2e-yarn-app",
+      "version": "1.1.0-alpha7.1"
+    }
+  ]
+}
