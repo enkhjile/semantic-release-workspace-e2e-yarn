@@ -7,14 +7,13 @@
     "live/*"
   ],
   "scripts": {
-    "acceptance": "node scripts/acceptance.mjs",
-    "build": "node scripts/build.mjs",
-    "test": "node --test scripts/consumer.test.mjs",
-    "release:live": "semantic-release"
+    "test": "node scripts/build-live.mjs && node --test scripts/*.test.mjs",
+    "release:live": "semantic-release",
+    "build": "node scripts/build-live.mjs"
   },
   "devDependencies": {
     "@yarnpkg/cli-dist": "4.18.1",
     "semantic-release": "25.0.9",
-    "semantic-release-workspace": "1.0.0-alpha.7"
+    "semantic-release-workspace": "file:vendor/shared-version-candidate.tgz"
   }
 }
