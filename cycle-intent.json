@@ -1,0 +1,22 @@
+{
+  "branches": {
+    "alpha": {
+      "mode": "preview",
+      "phase": "cycle-setup",
+      "branch": "alpha",
+      "channel": "alpha",
+      "budgetLimit": 12,
+      "expected": [],
+      "unchangedMembers": []
+    },
+    "main": {
+      "mode": "preview",
+      "phase": "cycle-setup",
+      "branch": "main",
+      "channel": "latest",
+      "budgetLimit": 12,
+      "expected": [],
+      "unchangedMembers": []
+    }
+  }
+}

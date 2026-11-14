@@ -1,7 +1,7 @@
 name: Shared workspace native checks
 on:
   pull_request:
-    branches: [alpha]
+    branches: [main, alpha]
 permissions:
   contents: read
 jobs:
