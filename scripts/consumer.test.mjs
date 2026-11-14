@@ -9,3 +9,6 @@ test('private discovery fixture is explicitly non-publishable',()=>{const p=JSON
 
 import * as appExports from '../live/app/index.js';
 test('app removes the legacy diagnostic lane API',()=>{assert.equal('diagnosticLane' in appExports,false);assert.equal(appExports.answer(),42);});
+
+import {formatAnswer} from '../live/core/index.js';
+test('core formats an answer with an explicit unit',()=>assert.equal(formatAnswer('units'),'42 units'));
