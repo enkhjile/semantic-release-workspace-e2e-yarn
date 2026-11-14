@@ -1,33 +1,22 @@
 {
   "branches": {
     "alpha": {
-      "mode": "no-change",
-      "phase": "covered-stable-backmerge",
+      "mode": "preview",
+      "phase": "cycle-complete",
       "branch": "alpha",
       "channel": "alpha",
       "budgetLimit": 12,
       "expected": [],
-      "unchangedMembers": [
-        "@enkhjile/srw-e2e-yarn-core",
-        "@enkhjile/srw-e2e-yarn-app"
-      ],
-      "previousSourceSha": "1d55453bec27a591b7d4e738e059f1eecd5beb0b"
+      "unchangedMembers": []
     },
     "main": {
-      "mode": "no-change",
-      "phase": "stable-verifier-repair",
+      "mode": "preview",
+      "phase": "cycle-complete",
       "branch": "main",
       "channel": "latest",
       "budgetLimit": 12,
       "expected": [],
-      "unchangedMembers": [],
-      "auditStable": {
-        "source": "3ed608316a54fdf51f96725151c2f19fe2949c76",
-        "parents": [
-          "7090c29cd59702024da64835ec01e0442f776e52",
-          "72b3156e8e2985e310b885f7567563eb1adcf13e"
-        ]
-      }
+      "unchangedMembers": []
     }
   }
 }
