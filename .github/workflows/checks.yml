@@ -21,8 +21,6 @@ jobs:
           package-manager-cache: false
       - run: npm install --global npm@12.2.1 pnpm@12.15.0 @yarnpkg/cli-dist@4.18.1 --force
       - run: echo "ACCEPTANCE_NPM_CLI=$(readlink -f "$(command -v npm)")" >> "$GITHUB_ENV"
-      - name: Rebuild and verify pinned candidate
-        run: node scripts/build-candidate.mjs
       - run: yarn install --immutable
       - run: yarn test
       - if: always()

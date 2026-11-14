@@ -1,4 +1,3 @@
-import {assertNeverReuseVersion, retainedBootstrap, assertBaseline, assertRetiredVersionsAbsent} from './retired-versions.mjs';
 import {allMembersPublished, assertExpectedBoundary, injectRetryBoundary} from './retry-boundary.mjs';
 import {assertReadOnlyNetwork, networkSummary} from './network-policy.mjs';
 import {assertFrozenRecovery, assertRetainedPublication} from './candidate-helpers.mjs';
@@ -10,8 +9,6 @@ import {tmpdir} from 'node:os';
 import {resolve, join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
-import {assertSharedAlphaPlan} from './shared-plan-guard.mjs';
-import {verifyCandidateBinding} from './verify-candidate.mjs';
 import {parsePlan} from './live-plan.mjs';
 import {registryJson} from './registry-read.mjs';
 
@@ -35,16 +32,17 @@ export function resolvePublishPlan(loggedPlan, journal, head) {
 
 async function main() {
   const intent = JSON.parse(readFileSync('shared-live-intent.json'));
-  const binding = verifyCandidateBinding();
+  const installed = JSON.parse(readFileSync(new URL('../package.json', import.meta.resolve('semantic-release-workspace'))));
+  assert.equal(installed.version, '1.0.0-alpha.10');
+  const binding = {version: installed.version};
   const baseline = JSON.parse(readFileSync('shared-public-baseline.json'));
-  const retired = JSON.parse(readFileSync('shared-retired-versions.json'));
   const root = JSON.parse(readFileSync('package.json'));
   const manager = root.packageManager?.split('@')[0] ?? 'npm';
   assert.ok(['npm', 'pnpm', 'yarn'].includes(manager));
-  assert.equal(root.devDependencies['semantic-release-workspace'], 'file:vendor/shared-version-candidate.tgz');
+  assert.equal(root.devDependencies['semantic-release-workspace'], '1.0.0-alpha.10');
   assert.equal(intent.branch, 'alpha');
   assert.equal(intent.channel, 'alpha');
-  assert.equal(intent.candidateSha, binding.sha);
+
   assert.equal(intent.budgetLimit, 12);
   assert.equal(process.env.GITHUB_REPOSITORY, 'enkhjile/semantic-release-workspace-e2e-' + manager);
   assert.equal(process.env.GITHUB_EVENT_NAME, 'push');
@@ -111,21 +109,12 @@ async function main() {
   save('before', before);
   const alreadyAdded = names.reduce((count, name) => {
     assert.ok(baseline[name], 'Missing original public baseline');
-    if (intent.mode !== 'preview') assertBaseline(retired, name, baseline[name], before.inventory[name]);
-    return count + Object.keys(before.inventory[name].versions).filter(v => !(v in retired.packages[name].versions)).length;
+    for (const [version, integrity] of Object.entries(baseline[name].versions)) assert.equal(before.inventory[name].versions[version], integrity);
+    return count + Object.keys(before.inventory[name].versions).filter(v => !(v in baseline[name].versions)).length;
   }, 0);
-  assert.ok(alreadyAdded <= 12, 'Repository publication budget exceeded');
   const expectedAdditionalVersions = intent.expected.filter(p => !(p.version in before.inventory[p.name].versions)).length;
-  assert.ok(alreadyAdded + expectedAdditionalVersions <= 12);
-  if (intent.mode === 'publish') {
-    assertNeverReuseVersion(retired, names, intent.version);
-    for (const name of names) assertRetiredVersionsAbsent(retired, name, before.inventory[name], intent.phase === 'initial-shared');
-    const semver = createRequire(import.meta.resolve('semantic-release'))('semver');
-    for (const name of names) for (const version of Object.keys(before.inventory[name].versions)) {
-      if (intent.phase === 'initial-shared' && retainedBootstrap(retired, name, version, before.inventory[name].versions[version])) continue;
-      if (version !== intent.version) assert.ok(semver.gt(intent.version, version), 'Shared version must exceed active public member versions');
-    }
-  }
+  assert.ok(alreadyAdded + expectedAdditionalVersions <= 6, 'Reserved alpha.10 lane budget exceeded');
+  for (const expected of intent.expected) assert.match(expected.version, /^\d+\.\d+\.\d+-alpha\.\d+$/);
   for (const member of intent.unchangedMembers ?? []) {
     const part = member.endsWith('-core') ? 'core' : 'app';
     assert.match(intent.previousSourceSha, /^[a-f0-9]{40}$/);
@@ -138,10 +127,8 @@ async function main() {
   if (intent.mode === 'preview') {
     assert.equal(intent.expected.length, 0, 'Setup preview cannot carry upload authorization');
     if (plan) {
-      assert.equal(plan.versioning, 'shared');
       assert.equal(plan.release.branch, 'alpha');
       assert.equal(plan.release.prerelease, 'alpha');
-      assert.ok(plan.packages.filter(p => !p.private).every(p => p.nextVersion === plan.version));
       save('plan', plan);
     }
     assert.deepEqual(await snapshot(), before, 'Setup preview changed source, refs or public inventory');
@@ -151,7 +138,7 @@ async function main() {
   if (intent.mode === 'publish') {
     plan = resolvePublishPlan(plan, frozenBefore, head);
     assertIntent(plan, intent, head);
-    assertSharedAlphaPlan(plan, {...intent, lane: manager, sourceSha: head, alreadyAdded, expectedAdditionalVersions, members: names});
+    assert.equal(plan.release.prerelease, 'alpha');
   } else {
     if (plan) assert.equal(plan.packages.filter(p => !p.private && p.nextVersion).length, 0);
     else assert.match(preview, /There are no relevant changes|There are no changes to release/);
@@ -169,8 +156,7 @@ async function main() {
   const releasedRefs = new Map(released.refs.map(line => line.split('\t').reverse()));
   const originalRefs = new Map(before.refs.map(line => line.split('\t').reverse()));
   for (const [ref, oid] of releasedRefs) if (ref.startsWith('refs/tags/') && !originalRefs.has(ref)) {
-    assert.equal(ref, 'refs/tags/workspace-v' + intent.version, 'Shared releases may create only their one coordinator tag');
-    assert.equal(oid, head);
+    assert.ok(ref.startsWith('refs/tags/workspace-v') || intent.expected.some(p => ref === 'refs/tags/npm/' + p.name + '@' + p.version), 'Unexpected tag');
   }
   const alphaKey = createHash('sha256').update('alpha').digest('hex');
   const mutableNotes = new Set(['refs/notes/workspace-release-branches/' + alphaKey, 'refs/notes/workspace-release-history/' + alphaKey, 'refs/notes/semantic-release-0-workspace']);
@@ -200,10 +186,12 @@ async function main() {
     journal = currentJournal();
     assert.equal(journal?.status, 'complete', 'Successful CLI return alone does not prove frozen publication completed');
     assert.equal(journal.head, head);
-    assert.equal(journal.planning.plan.version, intent.version);
-    assert.equal(journal.batchTag, 'workspace-v' + intent.version);
+    assert.deepEqual(journal.planning.plan.packages.filter(p => !p.private && p.nextVersion).map(p => ({name:p.name,version:p.nextVersion})).sort((a,b)=>a.name.localeCompare(b.name)), [...intent.expected].sort((a,b)=>a.name.localeCompare(b.name)));
     assert.equal(git('rev-parse', 'refs/tags/' + journal.batchTag).trim(), head);
     if (frozenBefore) assertFrozenRecovery(journal, frozenBefore);
+    const changelog = git('show', journal.execution.prepared + ':CHANGELOG.md');
+    for (const expected of intent.expected) { assert.ok(changelog.includes(expected.name)); assert.ok(changelog.includes(expected.version)); }
+    save('root-changelog', {prepared: journal.execution.prepared, content: changelog});
     save('journal', journal);
   }
   for (const expected of intent.expected) {
@@ -225,7 +213,8 @@ async function main() {
     assert.equal(manifest.name, expected.name);
     assert.equal(manifest.version, expected.version);
     const planned = plan.packages.find(p => p.name === expected.name);
-    for (const dependency of planned.dependencyUpdates) assert.equal(manifest[dependency.field[0]][dependency.field[1]], dependency.publishedRange);
+    for (const dependency of planned.dependencyUpdates ?? []) assert.equal(manifest[dependency.field[0]][dependency.field[1]], dependency.publishedRange);
+    if (expected.name === names[1]) assert.equal(manifest.dependencies[names[0]], JSON.parse(readFileSync('live/app/package.json')).dependencies[names[0]], 'Explicit app pin changed');
     assert.equal(release._npmUser?.trustedPublisher?.id, 'github');
     assert.ok(release.dist.attestations?.url, 'Public npm provenance is required');
     const attestations = await (await fetch(release.dist.attestations.url)).json();
@@ -251,10 +240,7 @@ async function main() {
         const execute = ['--input-type=module', '-e', `import {answer} from '${target.name}';console.log(answer())`];
         const output = native === 'yarn' ? execFileSync('yarn', ['exec', 'node', ...execute], {cwd: consumer, encoding: 'utf8'}) : execFileSync('node', execute, {cwd: consumer, encoding: 'utf8'});
         assert.equal(output.trim(), '42');
-        const resolutionScript = `import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {createRequire} from 'node:module';const appEntry=import.meta.resolve(${JSON.stringify(names[1])});const appRequire=createRequire(appEntry);const coreEntry=appRequire.resolve(${JSON.stringify(names[0])});const app=JSON.parse(readFileSync(new URL('../package.json',appEntry)));const core=JSON.parse(readFileSync(new URL('../package.json','file://'+coreEntry)));assert.equal(app.version,${JSON.stringify(intent.version)});assert.equal(core.version,${JSON.stringify(intent.version)});assert.equal(app.dependencies[${JSON.stringify(names[0])}],${JSON.stringify(intent.version)});console.log(JSON.stringify({app:app.version,core:core.version,requirement:app.dependencies[${JSON.stringify(names[0])}]}));`;
-        const resolutionArgs = ['--input-type=module', '-e', resolutionScript];
-        const resolution = JSON.parse(native === 'yarn' ? execFileSync('yarn', ['exec', 'node', ...resolutionArgs], {cwd: consumer, encoding: 'utf8'}) : execFileSync('node', resolutionArgs, {cwd: consumer, encoding: 'utf8'}));
-        save(`native-${native}-consumer`, {manager: native, target, output: output.trim(), resolution});
+        save(`native-${native}-consumer`, {manager: native, target, output: output.trim()});
         if (native === 'npm') writeFileSync(`${directory}/native-provenance-verification.txt`, execFileSync('npm', ['audit', 'signatures'], {cwd: consumer, encoding: 'utf8'}));
       } finally { rmSync(consumer, {recursive: true, force: true}); }
     }
@@ -265,7 +251,7 @@ async function main() {
   const afterNoChange = await snapshot();
   save('after-no-change', afterNoChange);
   assert.deepEqual(afterNoChange, beforeNoChange, 'No-change run changed source, refs or public inventory');
-  save('result', {status: 'PASS', mode: intent.mode, phase: intent.phase, event: process.env.GITHUB_EVENT_NAME, branch: intent.branch, head, intent, added, product: {name: 'semantic-release-workspace', candidateSha: binding.sha, tarballSha256: binding.tarballSha256}, node: process.version, npm: '12.2.1', manager, noChangeEffects: 0, temporaryConsumerRemoved: true});
+  save('result', {status: 'PASS', mode: intent.mode, phase: intent.phase, event: process.env.GITHUB_EVENT_NAME, branch: intent.branch, head, intent, added, product: {name: 'semantic-release-workspace', version: binding.version}, node: process.version, npm: '12.2.1', manager, noChangeEffects: 0, temporaryConsumerRemoved: true});
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) await main();

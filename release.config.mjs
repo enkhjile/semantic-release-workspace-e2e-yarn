@@ -6,5 +6,5 @@ export default {
     publish: true,
     changelog: true,
     npm: {trustedPublishing: true, provenance: true, access: 'public', visibilityTimeout: 900000},
-  }], "./scripts/retry-boundary.mjs"],
+  }], "./scripts/retry-boundary.mjs", ['@semantic-release/github', {successComment: false, failComment: false, failTitle: false, releasedLabels: false, addReleases: false}]],
 };

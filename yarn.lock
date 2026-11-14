@@ -70,11 +70,18 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@enkhjile/srw-e2e-yarn-app@workspace:live/app"
   dependencies:
-    "@enkhjile/srw-e2e-yarn-core": "workspace:*"
+    "@enkhjile/srw-e2e-yarn-core": "npm:1.0.0"
   languageName: unknown
   linkType: soft
 
-"@enkhjile/srw-e2e-yarn-core@workspace:*, @enkhjile/srw-e2e-yarn-core@workspace:live/core":
+"@enkhjile/srw-e2e-yarn-core@npm:1.0.0":
+  version: 1.0.0
+  resolution: "@enkhjile/srw-e2e-yarn-core@npm:1.0.0"
+  checksum: 10c0/8c593ddb1c414e22ade74fbb1c8ab8cf68e091352cf645af12249b4f7f0e63d55b5d09e453d825133535811307efc5fad27ffb55f519840e57df35f33082c1e0
+  languageName: node
+  linkType: hard
+
+"@enkhjile/srw-e2e-yarn-core@workspace:live/core":
   version: 0.0.0-use.local
   resolution: "@enkhjile/srw-e2e-yarn-core@workspace:live/core"
   languageName: unknown
@@ -525,7 +532,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@semantic-release/github@npm:^12.0.0":
+"@semantic-release/github@npm:12.0.10, @semantic-release/github@npm:^12.0.0":
   version: 12.0.10
   resolution: "@semantic-release/github@npm:12.0.10"
   dependencies:
@@ -3289,15 +3296,16 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "semantic-release-workspace-e2e-yarn@workspace:."
   dependencies:
+    "@semantic-release/github": "npm:12.0.10"
     "@yarnpkg/cli-dist": "npm:4.18.1"
     semantic-release: "npm:25.0.9"
-    semantic-release-workspace: "file:vendor/shared-version-candidate.tgz"
+    semantic-release-workspace: "npm:1.0.0-alpha.10"
   languageName: unknown
   linkType: soft
 
-"semantic-release-workspace@file:vendor/shared-version-candidate.tgz::locator=semantic-release-workspace-e2e-yarn%40workspace%3A.":
-  version: 0.0.0-development
-  resolution: "semantic-release-workspace@file:vendor/shared-version-candidate.tgz#vendor/shared-version-candidate.tgz::hash=b1c5e3&locator=semantic-release-workspace-e2e-yarn%40workspace%3A."
+"semantic-release-workspace@npm:1.0.0-alpha.10":
+  version: 1.0.0-alpha.10
+  resolution: "semantic-release-workspace@npm:1.0.0-alpha.10"
   dependencies:
     "@npmcli/agent": "npm:4.0.2"
     "@npmcli/config": "npm:10.14.0"
@@ -3315,7 +3323,7 @@ __metadata:
     yaml: "npm:2.9.1"
   peerDependencies:
     semantic-release: ^25.0.9
-  checksum: 10c0/337e04e154ff6080e90574e82a95ef841a277a0f9c5c94f2cfdb06587f04e7dd7822b516405a88b731c1056706042cc592a61d531e377302744e86d6be5a720b
+  checksum: 10c0/af629e866ba17a06de373d8e871332dfd668b8e35dcab2682865a8a500f58e67c1f298b70a921d3200981aa2ea62b48895877348174be7cb8fd0f3fcac7bca63
   languageName: node
   linkType: hard
 
