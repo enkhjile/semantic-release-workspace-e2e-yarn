@@ -1,7 +1,7 @@
 name: Workspace promotion-cycle acceptance
 on:
   push:
-    branches: [alpha]
+    branches: [main, alpha]
 permissions:
   contents: write
   id-token: write
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/alpha'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/alpha' || github.ref == 'refs/heads/main')
     environment: public-npm
     runs-on: ubuntu-latest
     timeout-minutes: 50
@@ -37,14 +37,14 @@ jobs:
       - name: Additive guard regression checks
         run: yarn exec node --test scripts/shared-plan-guard.test.mjs scripts/candidate-helpers.test.mjs scripts/network-policy.test.mjs scripts/retry-boundary.test.mjs scripts/retired-versions.test.mjs
       - name: Exact alpha plan, OIDC publication, registry and fresh-source checks
-        run: yarn exec node scripts/shared-live-cycle.mjs
+        run: yarn exec node scripts/cycle-live.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: shared-alpha-${{ github.run_id }}-${{ github.run_attempt }}
-          path: evidence/shared-version/
+          name: alpha10-cycle-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/alpha10-cycle/
           include-hidden-files: true
           retention-days: 30
       - name: Remove only job-owned downloads and installs
