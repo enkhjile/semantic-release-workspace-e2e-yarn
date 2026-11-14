@@ -107,7 +107,7 @@ async function main() {
     return output;
   }
   function currentJournal() {
-    const ref = 'refs/notes/workspace-release-branches/' + createHash('sha256').update(intent.branch).digest('hex');
+    const ref = intent.branch === 'main' ? 'refs/notes/semantic-release-workspace' : 'refs/notes/workspace-release-branches/' + createHash('sha256').update(intent.branch).digest('hex');
     const result = spawnSync('git', ['notes', '--ref=' + ref, 'list'], {encoding: 'utf8'});
     if (result.status !== 0) return null;
     return result.stdout.trim().split('\n').filter(Boolean).map(line => JSON.parse(git('cat-file', 'blob', line.split(' ')[0]))).find(value => value.head === head) ?? null;
@@ -177,13 +177,13 @@ async function main() {
     assert.ok(ref.startsWith('refs/tags/workspace-v') || intent.expected.some(p => ref === 'refs/tags/npm/' + p.name + '@' + p.version), 'Unexpected tag');
   }
   const alphaKey = createHash('sha256').update(intent.branch).digest('hex');
-  const mutableNotes = new Set(['refs/notes/workspace-release-branches/' + alphaKey, 'refs/notes/workspace-release-history/' + alphaKey, 'refs/notes/semantic-release-0-workspace']);
+  const mutableNotes = new Set(['refs/notes/semantic-release-workspace', 'refs/notes/workspace-release-branches/' + alphaKey, 'refs/notes/workspace-release-history/' + alphaKey, 'refs/notes/semantic-release-0-workspace']);
   for (const line of before.refs) {
     const [oid, ref] = line.split('\t');
     if (!mutableNotes.has(ref)) assert.equal(releasedRefs.get(ref), oid, `Existing ref changed: ${ref}`);
     else if (releasedRefs.get(ref) !== oid) {
       git('merge-base', '--is-ancestor', oid, releasedRefs.get(ref));
-      if (!ref.includes('workspace-release-branches/')) {
+      if (!ref.includes('workspace-release-branches/') && ref !== 'refs/notes/semantic-release-workspace') {
         for (const entry of git('ls-tree', '-r', oid).trim().split('\n').filter(Boolean)) {
           const [meta, path] = entry.split('\t');
           assert.equal(git('rev-parse', releasedRefs.get(ref) + ':' + path).trim(), meta.split(' ')[2], 'Historical note entry changed');

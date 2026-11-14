@@ -37,7 +37,7 @@ jobs:
       - name: Additive guard regression checks
         run: yarn exec node --test scripts/shared-plan-guard.test.mjs scripts/candidate-helpers.test.mjs scripts/network-policy.test.mjs scripts/retry-boundary.test.mjs scripts/retired-versions.test.mjs
       - name: Exact alpha plan, OIDC publication, registry and fresh-source checks
-        run: yarn exec node scripts/cycle-live.mjs
+        run: yarn exec node scripts/cycle-live.mjs && yarn exec node scripts/stable-audit.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v7.0.2
