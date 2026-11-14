@@ -2,20 +2,20 @@
   "branches": {
     "alpha": {
       "mode": "publish",
-      "phase": "post-stable-core-feature",
+      "phase": "post-stable-core-fix",
       "branch": "alpha",
       "channel": "alpha",
       "budgetLimit": 12,
       "expected": [
         {
           "name": "@enkhjile/srw-e2e-yarn-core",
-          "version": "1.5.0-alpha.1"
+          "version": "1.5.0-alpha.2"
         }
       ],
       "unchangedMembers": [
         "@enkhjile/srw-e2e-yarn-app"
       ],
-      "previousSourceSha": "0cbb94409397adbcf63feef134b90776550e8a2b"
+      "previousSourceSha": "a8a290ded530a4d651f889a60969fa85d844eebf"
     },
     "main": {
       "mode": "no-change",

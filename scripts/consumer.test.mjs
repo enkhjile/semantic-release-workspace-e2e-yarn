@@ -12,3 +12,4 @@ test('app removes the legacy diagnostic lane API',()=>{assert.equal('diagnosticL
 
 import {formatAnswer} from '../live/core/index.js';
 test('core formats an answer with an explicit unit',()=>assert.equal(formatAnswer('units'),'42 units'));
+test('core formats an answer without a unit',()=>assert.equal(formatAnswer(),'42'));
