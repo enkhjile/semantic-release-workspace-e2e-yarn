@@ -1,17 +1,17 @@
 {
   "mode": "publish",
-  "phase": "app-fix",
+  "phase": "shared-retry",
   "branch": "alpha",
   "channel": "alpha",
   "budgetLimit": 12,
   "expected": [
     {
-      "name": "@enkhjile/srw-e2e-yarn-app",
-      "version": "1.1.0-alpha.3"
+      "name": "@enkhjile/srw-e2e-yarn-core",
+      "version": "1.4.0-alpha.3"
     }
   ],
   "unchangedMembers": [
-    "@enkhjile/srw-e2e-yarn-core"
+    "@enkhjile/srw-e2e-yarn-app"
   ],
-  "previousSourceSha": "d162b07db1d12d078acea99b767a65d86c686826"
+  "previousSourceSha": "8bcc11f2e5a2ff9daba9da6b470d579afa924301"
 }
