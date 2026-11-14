@@ -1,9 +1,7 @@
-name: DIAGNOSTIC_LIVE_OIDC
+name: Workspace promotion-cycle acceptance
 on:
-  workflow_dispatch:
-defaults:
-  run:
-    shell: bash
+  push:
+    branches: [main, alpha]
 permissions:
   contents: write
   id-token: write
@@ -11,39 +9,44 @@ concurrency:
   group: workspace-release
   cancel-in-progress: false
 jobs:
-  diagnostic-live-oidc:
-    if: github.ref == 'refs/heads/alpha'
+  release:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/alpha' || github.ref == 'refs/heads/main')
     environment: public-npm
     runs-on: ubuntu-latest
+    timeout-minutes: 50
+    defaults:
+      run:
+        shell: bash
+    env:
+      YARN_ENABLE_GLOBAL_CACHE: 'false'
     steps:
+      - name: Set job-owned cache paths
+        run: |
+          printf '%s\n' "npm_config_cache=$RUNNER_TEMP/shared-version-npm-cache" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: 24.22.1
-      - run: npm install --global npm@11.21.1
-      - run: |
-          npm install --global --force @yarnpkg/cli-dist@4.18.1
-          yarn install --immutable
-      - name: Assert exactly the two approved public packages
-        run: node scripts/live-inventory.mjs
-      - name: Record pinned native npm binary
-        run: echo "DIAGNOSTIC_NPM_BIN=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
-      - run: mkdir -p evidence
-      - name: Record bootstrap baseline
-        run: node scripts/live-proof.mjs baseline
-      - name: Required OIDC and provenance preview
-        run: yarn exec semantic-release --dry-run 2>&1 | tee evidence/live-dry-run.log
-      - name: DIAGNOSTIC_LIVE_OIDC public ESM resolution plus npm11 packaging
-        run: yarn exec semantic-release 2>&1 | tee evidence/live-release.log
-      - run: node scripts/live-proof.mjs released
-      - name: No-change live rerun
-        run: yarn exec semantic-release 2>&1 | tee evidence/live-no-change.log
-      - run: node scripts/live-proof.mjs rerun
-      - run: git ls-remote --refs origin > evidence/live-remote-refs.txt
+          package-manager-cache: false
+      - run: npm install --global npm@12.2.1 pnpm@12.15.0 @yarnpkg/cli-dist@4.18.1 --force
+      - run: echo "ACCEPTANCE_NPM_CLI=$(readlink -f "$(command -v npm)")" >> "$GITHUB_ENV"
+      - run: echo "ACCEPTANCE_NPM_PATH=$(dirname "$(command -v npm)")" >> "$GITHUB_ENV"
+      - run: yarn install --immutable
+      - name: Additive guard regression checks
+        run: yarn exec node --test scripts/shared-plan-guard.test.mjs scripts/candidate-helpers.test.mjs scripts/network-policy.test.mjs scripts/retry-boundary.test.mjs scripts/retired-versions.test.mjs
+      - name: Exact alpha plan, OIDC publication, registry and fresh-source checks
+        run: yarn exec node scripts/cycle-live.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: diagnostic-live-oidc-yarn
-          path: evidence/
+          name: alpha10-cycle-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/alpha10-cycle/
+          include-hidden-files: true
+          retention-days: 30
+      - name: Remove only job-owned downloads and installs
+        if: always()
+        run: rm -rf node_modules .yarn .pnp.cjs .pnp.loader.mjs vendor/shared-version-candidate.tgz "$RUNNER_TEMP/shared-version-candidate-source" "$RUNNER_TEMP/shared-version-npm-cache" "$RUNNER_TEMP/shared-version-pnpm-store"

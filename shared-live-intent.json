@@ -1,0 +1,9 @@
+{
+  "mode": "preview",
+  "phase": "cycle-preview",
+  "branch": "alpha",
+  "channel": "alpha",
+  "budgetLimit": 12,
+  "expected": [],
+  "unchangedMembers": []
+}
