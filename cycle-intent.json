@@ -1,13 +1,21 @@
 {
   "branches": {
     "alpha": {
-      "mode": "preview",
-      "phase": "cycle-setup",
+      "mode": "publish",
+      "phase": "breaking-alpha",
       "branch": "alpha",
       "channel": "alpha",
       "budgetLimit": 12,
-      "expected": [],
-      "unchangedMembers": []
+      "expected": [
+        {
+          "name": "@enkhjile/srw-e2e-yarn-app",
+          "version": "2.0.0-alpha.1"
+        }
+      ],
+      "unchangedMembers": [
+        "@enkhjile/srw-e2e-yarn-core"
+      ],
+      "previousSourceSha": "92df4411874cba27ce3ddb90e368beec8dbf9e0a"
     },
     "main": {
       "mode": "preview",
