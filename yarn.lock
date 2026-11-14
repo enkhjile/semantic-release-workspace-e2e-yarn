@@ -70,14 +70,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@enkhjile/srw-e2e-yarn-app@workspace:live/app"
   dependencies:
-    "@enkhjile/srw-e2e-yarn-core": "npm:1.0.0"
+    "@enkhjile/srw-e2e-yarn-core": "npm:1.4.0-alpha.2"
   languageName: unknown
   linkType: soft
 
-"@enkhjile/srw-e2e-yarn-core@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@enkhjile/srw-e2e-yarn-core@npm:1.0.0"
-  checksum: 10c0/8c593ddb1c414e22ade74fbb1c8ab8cf68e091352cf645af12249b4f7f0e63d55b5d09e453d825133535811307efc5fad27ffb55f519840e57df35f33082c1e0
+"@enkhjile/srw-e2e-yarn-core@npm:1.4.0-alpha.2":
+  version: 1.4.0-alpha.2
+  resolution: "@enkhjile/srw-e2e-yarn-core@npm:1.4.0-alpha.2"
+  checksum: 10c0/53606b97998518d439b3e0219d975ccb6ed7e8d7cff4388bce3869ddbbcc5262379c29b88ea293298a31f3c8c9443b32800de1c503f23d3f6c8003abc8e6d0ab
   languageName: node
   linkType: hard
 
